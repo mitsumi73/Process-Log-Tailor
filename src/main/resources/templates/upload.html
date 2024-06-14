@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File Page</title>
+
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/7392/7392631.png" type="image/png">
+    <style>
+        /* ===== upload.html css ===== */
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f5f5f5; /* Optional background color */
+        }
+
+        .wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+        }
+
+        .form {
+            background-color: #fff;
+            box-shadow: 0 10px 60px rgb(218, 229, 255);
+            border: 1px solid rgb(159, 159, 160);
+            border-radius: 20px;
+            padding: 2rem .7rem .7rem .7rem;
+            text-align: center;
+            font-size: 1.125rem;
+            height: 500px;
+            width: 50vw; /* Changed from 100dvh to 50vw */
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 1500px) and (max-height: 850px) {
+            .form {
+                width: 90vw;
+                height: 95%;
+            }
+        }
+
+        @media (max-width: 1300px) and (max-height: 800px) {
+            .form {
+                width: 80vw;
+                height: 90%;
+            }
+        }
+
+        @media (max-width: 1100px) and (max-height: 750px) {
+            .form {
+                width: 70vw;
+                height: 85%;
+            }
+        }
+
+        @media (max-width: 900px) and (max-height: 700px) {
+            .form {
+                width: 60vw;
+                height: 80%;
+            }
+        }
+
+        @media (max-width: 700px) and (max-height: 650px) {
+            .form {
+                width: 50vw;
+                height: 75%;
+            }
+        }
+
+        @media (max-width: 500px) and (max-height: 600px) {
+            .form {
+                width: 40vw;
+                height: 70%;
+            }
+        }
+
+        .form-title {
+            color: #000000;
+            font-size: 1.8rem;
+            font-weight: 500;
+        }
+
+        .form-paragraph {
+            margin-top: 10px;
+            font-size: 0.9375rem;
+            color: rgb(105, 105, 105);
+        }
+
+        .drop-container {
+            background-color: #fff;
+            position: relative;
+            display: flex;
+            gap: 15px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            margin-top: 2.1875rem;
+            border-radius: 10px;
+            border: 2px dashed rgb(171, 202, 255);
+            color: #444;
+            cursor: pointer;
+            transition: background .2s ease-in-out, border .2s ease-in-out;
+            height: 350px;
+        }
+
+        .drop-container.hover {
+            background: rgba(0, 140, 255, 0.164);
+            border-color: rgba(17, 17, 17, 0.616);
+        }
+
+        .drop-container.hover .drop-title {
+            color: #222;
+        }
+
+        .drop-title {
+            color: #444;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            transition: color .2s ease-in-out;
+        }
+
+        .file-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        #xesFile {
+            width: 100%;
+            max-width: 350px;
+            color: #444;
+            padding: 2px;
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid rgba(8, 8, 8, 0.288);
+        }
+
+        #xesFile::file-selector-button {
+            margin-right: 20px;
+            border: none;
+            background: #084cdf;
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: background .2s ease-in-out;
+        }
+
+        #xesFile::file-selector-button:hover {
+            background: #0d45a5;
+        }
+
+        .button {
+            display: block;
+            width: 200px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .button_upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            outline: none;
+            border: 0;
+            vertical-align: middle;
+            text-decoration: none;
+            background: transparent;
+            padding: 0;
+            font-size: inherit;
+            font-family: inherit;
+        }
+
+        .button_upload.learn-more {
+            width: 12rem;
+            height: auto;
+            top: 20px;
+        }
+
+        .button_upload.learn-more .circle {
+            transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+            position: relative;
+            display: block;
+            margin: 0;
+            width: 3rem;
+            height: 3rem;
+            background: #282936;
+            border-radius: 1.625rem;
+        }
+
+        .button_upload.learn-more .circle .icon {
+            transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            background: #fff;
+        }
+
+        .button_upload.learn-more .circle .icon.arrow {
+            transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+            left: 0.625rem;
+            width: 1.125rem;
+            height: 0.125rem;
+            background: none;
+        }
+
+        .button_upload.learn-more .circle .icon.arrow::before {
+            position: absolute;
+            content: "";
+            top: -0.29rem;
+            right: 0.0625rem;
+            width: 0.625rem;
+            height: 0.625rem;
+            border-top: 0.125rem solid #fff;
+            border-right: 0.125rem solid #fff;
+            transform: rotate(45deg);
+        }
+
+        .button_upload.learn-more .button-text {
+            transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 0.50rem 0;
+            margin: 0 0 0 1.85rem;
+            color: #282936;
+            font-weight: 700;
+            line-height: 1.6;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .button_upload:hover .circle {
+            width: 100%;
+        }
+
+        .button_upload:hover .circle .icon.arrow {
+            background: #fff;
+            transform: translate(1rem, 0);
+        }
+
+        .button_upload:hover .button-text {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <nav id="main-area">
+            <form method="POST" enctype="multipart/form-data" th:action="@{/upload}" class="form">
+                <span class="form-title">Upload your file</span>
+                <p class="form-paragraph">File should be an XES</p>
+                <label class="drop-container" id="drop-container">
+                    <svg viewBox="0 0 640 512" height="2em">
+                        <path d="M144 480C64.5 480 0 415.5 0 336c0-62.8 40.2-116.2 96.2-135.9c-.1-2.7-.2-5.4-.2-8.1c0-88.4 71.6-160 160-160c59.3 0 111 32.2 138.7 80.2C409.9 102 428.3 96 448 96c53 0 96 43 96 96c0 12.2-2.3 23.8-6.4 34.6C596 238.4 640 290.1 640 352c0 70.7-57.3 128-128 128H144zm79-217c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l39-39V392c0 13.3 10.7 24 24 24s24-10.7 24-24V257.9l39 39c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-80-80c-9.4-9.4-24.6-9.4-33.9 0l-80 80z"></path>
+                    </svg>
+                    <span class="drop-title">Drop files here</span>
+                    or
+                    <input type="file" name="file" id="xesFile">
+                    <button class="button_upload learn-more" type="submit">
+                        <span class="button_upload circle" aria-hidden="true">
+                            <span class="button_upload icon arrow"></span>
+                        </span>
+                        <span class="button_upload button-text">Upload</span>
+                    </button>
+                </label>
+            </form>
+        </nav>
+    </div>
+</body>
+</html>
