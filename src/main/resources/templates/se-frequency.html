@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Event Sequence Frequency</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/7392/7392631.png" type="image/png">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            display: contents;
+            margin: 50px 30px 10px 30px;
+        }
+
+        .chart-container, .table-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-download,
+        .btn-primary,
+        .btn-secondary {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        .table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        tr td:nth-child(3) {
+            text-align: center;
+        }
+
+        .table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .table th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .table-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script>
+        let sortDirection = {}; // Track sort direction for each column
+
+        function paginateTable(rowsPerPage) {
+            const rows = document.querySelectorAll('.table-container tbody tr');
+            const totalRows = rows.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            const paginationContainer = document.querySelector('.pagination-container');
+            let currentPage = 1;
+
+            function displayRows() {
+                rows.forEach((row, index) => {
+                    row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? '' : 'none';
+                });
+                updateOrderColumn(rowsPerPage, currentPage);
+            }
+
+            function updatePagination() {
+                paginationContainer.innerHTML = `
+                    <button class="btn btn-secondary" onclick="previousPage()" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                    <span> Page ${currentPage} of ${totalPages} </span>
+                    <button class="btn btn-secondary" onclick="nextPage()" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                `;
+            }
+
+            window.previousPage = function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayRows();
+                    updatePagination();
+                }
+            };
+
+            window.nextPage = function() {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayRows();
+                    updatePagination();
+                }
+            };
+
+            displayRows();
+            updatePagination();
+        }
+
+        function changeRowsPerPage(value) {
+            let rowsPerPage;
+            if (value === 'All') {
+                rowsPerPage = Number.MAX_SAFE_INTEGER;
+            } else {
+                rowsPerPage = parseInt(value);
+            }
+            paginateTable(rowsPerPage);
+        }
+
+        function downloadExcel() {
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.href = '/se-frequency/download';
+            downloadLink.click();
+        }
+
+        function sortTableByColumn(columnIndex, type) {
+            const table = document.querySelector('.table-container tbody');
+            const rows = Array.from(table.rows);
+            const isAscending = sortDirection[columnIndex] !== 'asc';
+            sortDirection[columnIndex] = isAscending ? 'asc' : 'desc';
+
+            let sortedRows;
+            if (type === 'sequence') {
+                sortedRows = rows.sort((a, b) => {
+                    const aText = a.cells[columnIndex].textContent.trim();
+                    const bText = b.cells[columnIndex].textContent.trim();
+                    return isAscending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+                });
+            } else if (type === 'frequency') {
+                sortedRows = rows.sort((a, b) => {
+                    const aFreq = parseInt(a.cells[columnIndex].textContent.trim());
+                    const bFreq = parseInt(b.cells[columnIndex].textContent.trim());
+                    if (aFreq === bFreq) {
+                        const aSeq = a.cells[1].textContent.trim();
+                        const bSeq = b.cells[1].textContent.trim();
+                        return isAscending ? aSeq.localeCompare(bSeq) : bSeq.localeCompare(aSeq);
+                    }
+                    return isAscending ? aFreq - bFreq : bFreq - aFreq;
+                });
+            }
+
+            sortedRows.forEach(row => table.appendChild(row));
+            changeRowsPerPage(document.getElementById('rows-per-page').value); // Repaginate after sorting
+        }
+
+        function updateOrderColumn(rowsPerPage, currentPage) {
+            const rows = document.querySelectorAll('.table-container tbody tr');
+            rows.forEach((row, index) => {
+                row.querySelector('td').textContent = (currentPage - 1) * rowsPerPage + index + 1;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const rowsPerPageSelect = document.getElementById('rows-per-page');
+            if (rowsPerPageSelect) {
+                rowsPerPageSelect.addEventListener('change', function() {
+                    changeRowsPerPage(this.value);
+                });
+            }
+
+            const frequencySortButton = document.getElementById('sort-frequency');
+            if (frequencySortButton) {
+                frequencySortButton.addEventListener('click', function() {
+                    sortTableByColumn(2, 'frequency');
+                    frequencySortButton.textContent = frequencySortButton.textContent === 'Frequency Decline' ? 'Frequency Ascension' : 'Frequency Decline';
+                });
+            }
+
+            // Initialize table with default rows per page
+            changeRowsPerPage(rowsPerPageSelect.value);
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1 style="padding: 30px;" class="text-center">Event Sequence Frequency</h1>
+    <div class="table-container">
+        <div class="table-options">
+            <div>
+                <label for="rows-per-page">Select Number Of Rows: </label>
+                <select id="rows-per-page" class="form-control" style="width: auto; display: inline-block;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="All">All</option>
+                </select>
+            </div>
+            <div>
+                <button id="sort-frequency" class="btn btn-secondary">Frequency Decline</button>
+            </div>
+        </div>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+            <tr>
+                <th>Order</th>
+                <th>Sequence</th>
+                <th>Frequency</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Assuming 'sequences' is a list of key-value pairs with 'key' being the sequence and 'value' being the frequency -->
+            <tr th:each="sequence, statVar : ${sequences}">
+                <td th:text="${statVar.index + 1}"></td>
+                <td th:text="${sequence.key}"></td>
+                <td th:text="${sequence.value}"></td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="text-center btn-download">
+            <a id="download-link" style="display:none;"></a>
+            <button type="button" id="download-button" class="btn btn-success" onclick="downloadExcel()">Download Excel</button>
+            <button type="button" id="download-xes-button" class="btn btn-warning">Download XES</button>
+        </div>
+        <div class="pagination-container">
+            <button class="btn btn-secondary" onclick="previousPage()" disabled>Previous</button>
+            <span> Page 1 of 1 </span>
+            <button class="btn btn-secondary" onclick="nextPage()" disabled>Next</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>
