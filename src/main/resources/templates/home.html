@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>ProcessLogTailor</title>
+    <link rel="stylesheet" asset="eduser.css" href="chrome-extension://mjdbhokoopacimoekfgkcoogikbfgngb/assets/eduser.css">
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/7392/7392631.png" type="image/png">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        @media (max-width: 991px) {
+            body {
+                flex-direction: column;
+            }
+        }
+
+        .header, .footer {
+            color: white;
+            background-color: black;
+            font: 600 50px/150% Inter, sans-serif;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 2px solid var(--body-background-color);
+        }
+
+        @media (max-width: 991px) {
+            .header, .footer {
+                font-size: 40px;
+                padding: 30px 20px;
+            }
+        }
+
+        .main-content {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px auto;
+            max-width: 85%;
+            width: 100%;
+        }
+
+        @media (max-width: 991px) {
+            .main-content {
+                flex-direction: column;
+                margin: 40px auto;
+            }
+        }
+
+        .text-section {
+            flex: 1;
+            margin: 0 30px;
+        }
+
+        .image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 991px) {
+            .text-section, .image-section {
+                width: 100%;
+            }
+        }
+
+        .intro-text {
+            padding: 0 20px;
+        }
+
+        .intro-text h2 {
+            font: 600 40px/110% Inter, sans-serif;
+            padding: 0 30px;
+            color: #18191a;
+        }
+
+        .intro-text p {
+            margin-top: 24px;
+            font: 400 24px/36px Inter, sans-serif;
+            color: #18191a;
+        }
+
+        .button-get-started {
+            margin-top: 24px;
+            padding: 14px 24px;
+            background-color: #000;
+            width: 170px;
+            color: #f7f7f7;
+            border-radius: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+            font: 500 20px/150% Inter, sans-serif;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .faq-section {
+            margin-top: 59px;
+            padding: 20px;
+            color: #828282;
+            font: 400 24px/150% Inter, sans-serif;
+        }
+
+        .faq-section h3 {
+            font: 600 40px/110% Inter, sans-serif;
+            color: black;
+        }
+
+        .faq-section ul {
+            margin-top: 24px;
+            padding: 0;
+        }
+
+        .faq-section li {
+            margin-top: 24px;
+            list-style-type: none;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .faq-section li .answer {
+            display: none;
+            margin-top: 10px;
+            padding-left: 20px;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .faq-section li::before {
+            content: "+";
+            position: absolute;
+            left: -20px;
+            font-weight: bold;
+        }
+
+        .faq-section li.open::before {
+            content: "-";
+        }
+
+        .image-container img {
+            width: 70%;
+            max-width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-left: 100px;
+        }
+
+        .carousel-image {
+            display: none;
+        }
+
+        .carousel-image.active {
+            display: block;
+        }
+
+        .post-section {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px;
+        }
+
+        @media (max-width: 991px) {
+            .post-section {
+                flex-direction: column;
+            }
+        }
+
+        .post {
+            background-color: #dc5b5b;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+        }
+
+        .post img {
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+        }
+
+        .post-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .post-details h4 {
+            font: 600 16px/150% Inter, sans-serif;
+        }
+
+        .post-details p {
+            margin: 16px 0 0;
+            font: 400 15px/20px Inter, sans-serif;
+        }
+
+        .likes {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-top: 20px;
+        }
+
+        .likes img {
+            width: 24px;
+            height: 24px;
+            border-radius: 0;
+        }
+
+        .text-column {
+            display: flex;
+            flex-direction: column;
+            line-height: normal;
+            width: 40%;
+            margin-left: 0;
+        }
+
+        @media (max-width: 991px) {
+            .text-column {
+                width: 100%;
+            }
+        }
+
+        .event-info {
+            display: flex;
+            flex-direction: column;
+            color: #000;
+            border: 1px solid white;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 0 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+        }
+
+        @media (max-width: 991px) {
+            .event-info {
+                max-width: 100%;
+                margin-top: 40px;
+            }
+        }
+
+        .event-title {
+            letter-spacing: -1.28px;
+            font: 700 35px Inter, sans-serif;
+        }
+
+        @media (max-width: 991px) {
+            .event-title {
+                max-width: 100%;
+                font-size: 40px;
+            }
+        }
+
+        .event-time {
+            color: #828282;
+            margin-top: 5px;
+            font: 400 16px/150% Inter, sans-serif;
+        }
+
+        @media (max-width: 991px) {
+            .event-time {
+                max-width: 100%;
+            }
+        }
+
+        .event-description {
+            margin-top: 24px;
+            font: 500 16px/30px Inter, sans-serif;
+            text-align: justify;
+        }
+
+        @media (max-width: 991px) {
+            .event-description {
+                max-width: 100%;
+            }
+        }
+
+        .like-icon {
+            cursor: pointer;
+        }
+
+        .video-column {
+            display: flex;
+            flex-direction: column;
+            line-height: normal;
+            width: 66%;
+        }
+
+        @media (max-width: 991px) {
+            .video-column {
+                width: 100%;
+            }
+        }
+
+        .responsive-video {
+            aspect-ratio: 1.79;
+            object-position: center;
+            width: 100%;
+            align-self: stretch;
+            margin: auto 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+        }
+
+        @media (max-width: 991px) {
+            .responsive-video {
+                max-width: 100%;
+                margin-top: 40px;
+            }
+        }
+
+        .carousel-image{
+            display: flex;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+        }
+    </style>
+</head>
+<body>
+<header class="header">ProcessLogTailor</header>
+<main class="main-content">
+    <section class="text-section">
+        <div class="intro-text">
+            <h2 style="padding-left: 0">Welcome</h2>
+            <p>This project primarily focuses on event logging and data visualization, designed to allow users to easily
+                upload and view data. It aims to provide an intuitive and efficient way for users to manage and analyze
+                their event logs.</p>
+            <a href="/upload">
+                <button class="button-get-started">Get started</button>
+            </a>
+        </div>
+        <section class="faq-section">
+            <h3>FAQ</h3>
+            <ul>
+                <li>
+                    What is ProcessLogTailor and how does it function?
+                    <div class="answer">ProcessLogEvent is a mechanism used to log events that occur within a process.
+                        It functions by capturing specific events and recording relevant details such as the event type,
+                        timestamp, and associated data. This helps in tracking the execution flow and diagnosing issues
+                        within the process.
+                    </div>
+                </li>
+                <li>
+                    How can I enable or configure ProcessTailor in my application?
+                    <div class="answer">To enable or configure ProcessLogTailor, you need to integrate the logging
+                        library or framework that supports this feature into your application. You can then specify
+                        which events to log and the level of detail required. Configuration settings can typically be
+                        adjusted in your application's configuration file or through code.
+                    </div>
+                </li>
+                <li>
+                    What are the common use cases for ProcessLogTailor?
+                    <div class="answer">Common use cases for ProcessLogTailor include monitoring application
+                        performance,
+                        debugging issues, auditing user actions, and ensuring compliance with security policies. By
+                        logging key events, developers and administrators can gain insights into the application's
+                        behavior and quickly identify and resolve problems.
+                    </div>
+                </li>
+            </ul>
+        </section>
+    </section>
+    <section class="image-section">
+        <div class="image-container">
+            <img src="/images/Group 11.png"
+                 alt="Description of image 1" loading="lazy" class="carousel-image active"/>
+        </div>
+    </section>
+</main>
+<div class="intro-text">
+    <h2>Hot New Process Mining Event Log</h2>
+    <hr style="margin-top: 10px">
+</div>
+<section class="post-section">
+    <article class="post">
+        <img src="https://images.ctfassets.net/zmrtlfup12q3/1dwPlidJYbo9E8d9OcWgdR/733399d1d30dd1641d9833e15c6eab34/AI-SEO_blog_header_01.jpg?fm=avif&q=75&w=120&h=120&fit=fill&f=center&r="
+             alt="Charles profile image" loading="lazy"/>
+        <div class="post-details">
+            <p><strong>AI and Machine Learning Integration</strong>: Experts predict that AI, machine learning (ML), and
+                large language models (LLMs) will continue to unlock new capabilities in process intelligence. These
+                technologies are expected to enhance process mining tools, making them faster and smarter, and providing
+                more accurate insights by analyzing event logs more effectively​<span class="" data-state="closed"><span
+                        class="text-token-text-secondary"> (</span><a
+                        href="https://www.celonis.com/blog/expert-predictions-8-trends-for-process-mining-in-2024-and-beyond/"
+                        target="_blank" rel="noreferrer" class="text-green-600 !no-underline">Celonis</a><span
+                        class="text-token-text-secondary">)</span></span>​.</p>
+            <div class="likes">
+                <img src="https://cdn-icons-png.freepik.com/256/8647/8647296.png?ga=GA1.1.648560867.1713175690&semt=ais_hybrid"
+                     alt="Like icon" class="like-icon" loading="lazy"/>
+                <span class="like-count">12 likes</span>
+            </div>
+        </div>
+    </article>
+    <article class="post" style="background-color: #4df623;">
+        <img src="https://www.mdpi.com/applsci/applsci-11-10556/article_deploy/html/images/applsci-11-10556-g005-550.jpg"
+             alt="Charles profile image" loading="lazy"/>
+        <div class="post-details">
+            <p><strong>Event Log Preprocessing</strong>: A recent review highlighted the importance of preprocessing
+                techniques for event logs. Effective preprocessing, such as trace-clustering and event filtering, helps
+                manage noise and incompleteness in the data, which is crucial for improving the quality and performance
+                of process mining tasks​<span class="" data-state="closed"><span
+                        class="text-token-text-secondary"> (</span><a href="https://www.mdpi.com/2076-3417/11/22/10556"
+                                                                      target="_blank" rel="noreferrer"
+                                                                      class="text-green-600 !no-underline">MDPI</a><span
+                        class="text-token-text-secondary">)</span></span>​.</p>
+            <div class="likes">
+                <img src="https://cdn-icons-png.freepik.com/256/8647/8647296.png?ga=GA1.1.648560867.1713175690&semt=ais_hybrid"
+                     alt="Like icon" class="like-icon" loading="lazy"/>
+                <span class="like-count">2 likes</span>
+            </div>
+        </div>
+    </article>
+    <article class="post" style="background-color: #2abfee;">
+        <img src="https://www.tf-pm.org/pics/logo.jpg"
+             alt="Charles profile image" loading="lazy"/>
+        <div class="post-details">
+            <p><strong>New Standards and Tools</strong>: The IEEE Task Force on Process Mining continues to update and
+                provide new standards for event logs, such as the OCEL 2.0 standard for object-centric event logs. These
+                standards aim to improve the expressiveness and interoperability of event data, facilitating more
+                comprehensive and detailed process analyses​<span class="" data-state="closed"><span
+                        class="text-token-text-secondary"> (</span><a href="https://www.tf-pm.org/resources/logs"
+                                                                      target="_blank" rel="noreferrer"
+                                                                      class="text-green-600 !no-underline">TF-PM</a><span
+                        class="text-token-text-secondary">)</span></span>​​<span class="" data-state="closed"><span
+                        class="text-token-text-secondary"> (</span><a href="https://www.mdpi.com/2076-3417/11/22/10556"
+                                                                      target="_blank" rel="noreferrer"
+                                                                      class="text-green-600 !no-underline">MDPI</a><span
+                        class="text-token-text-secondary">)</span></span>​.</p>
+            <div class="likes">
+                <img src="https://cdn-icons-png.freepik.com/256/8647/8647296.png?ga=GA1.1.648560867.1713175690&semt=ais_hybrid"
+                     alt="Like icon" class="like-icon" loading="lazy"/>
+                <span class="like-count">2 likes</span>
+            </div>
+        </div>
+    </article>
+</section>
+<br>
+<div class="intro-text">
+    <h2>Hot Process Mining</h2>
+    <hr>
+</div>
+<section class="post-section" style="margin-top: 30px">
+       <div class="video-column">
+        <img src="/images/img.jpg" alt="Static Image" class="carousel-image active"/>
+        <img src="/images/img_1.png" alt="Static Image" class="carousel-image active"/>
+        <img src="/images/Screenshot 2024-06-07 080158.png" alt="Static Image" class="carousel-image active"/>
+        <script>
+            function postMessageToIframe(message) {
+                const iframe = document.querySelector('iframe');
+                iframe.contentWindow.postMessage(message, '*');
+            }
+
+            postMessageToIframe('{"event":"command","func":"playVideo","args":""}');
+        </script>
+    </div>
+    <article class="text-column">
+        <div class="event-info">
+            <h1 class="event-title">Introduction to Process Discovery</h1>
+            <time class="event-time" datetime="2024-05-20T17:20">
+                Date: 21 April 2021
+                <a href="https://www.youtube.com/playlist?list=PLG_1ZxIPXO0uRZtlYxaLgc62kKfko8QQ6" dir="auto"
+                   style="font-weight: bold;">
+                    Process Mining Course (BPI 2021)</a>
+            </time>
+            <p class="event-description">
+                More about this Process Mining Course @ RWTH Aachen University (BPI 2021):
+                This course consists of around 20 lectures covering the different fields of process mining, including
+                five process discovery techniques, three conformance checking techniques, data preparation, decision
+                mining, predictive analytics, machine learning, big-data analytics, and process mining software. The
+                course is at an introductory level, but also comprehensive and providing details on state-of-the-art
+                process mining techniques.
+            </p>
+            <p class="event-description">
+                The videos are part of the Business Process Intelligence (BPI) course organized by the PADS (Process and
+                Data Science) group at RWTH (www.pads.rwth-aachen.de) and led by prof.dr.ir. Wil van der Aalst. The
+                lectures by Wil van der Aalst are online due to COVID-19 and recorded in Spring 2021. Niklas Adams,
+                Bianka Bakullari, Ali Norouzifar, Marco Pegoraro, Mahsa Pourbafrani, Mahnaz Qafari, Majid Rafiei, and
+                Miriam Wagner took care of the instructions and assignments.</p>
+            <p class="event-description">
+                Overview:
+            <ol style="margin-left: 100px; font-size: 14px">
+                <li>Introduction to Process Mining</li>
+                <li>Decision Trees</li>
+                <li>Association Rules & Clustering</li>
+                <li>Introduction to Process Discovery</li>
+                <li>Petri Nets & Alpha Algorithm</li>
+                <li>Alpha Algorithm Continued</li>
+                <li>Quality of Discovered Models and Representations</li>
+                <li>Heuristic Mining</li>
+                <li>Region-Based Mining</li>
+                <li>Inductive Mining</li>
+                <li>Event Data and Exploration</li>
+                <li>Conformance Checking (1/2)</li>
+                <li>Conformance Checking (2/2)</li>
+                <li>Decision Mining</li>
+                <li>Organizational Mining & Bottleneck Analysis</li>
+                <li>Refined Process Mining Framework and Operational Support</li>
+                <li>Dealing with Big Event Data</li>
+                <li>Discussion of an old/possible exam</li>
+                <li>Summary of the Course and Next Steps</li>
+            </ol>
+            <iframe
+                src="https://www.youtube.com/embed/8lNmOmqZpxw"
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                class="responsive-video">
+        </iframe>
+        </div>
+    </article>
+</section>
+<footer class="footer">한-베트남연합팀</footer>
+<script>
+    $(document).ready(function () {
+        // Gán sự kiện click cho các mục FAQ
+        $('.faq-section li').click(function () {
+            $(this).toggleClass('open');
+            $(this).find('.answer').slideToggle();
+        });
+
+        // Khởi tạo trạng thái liked cho các biểu tượng Like
+        $('.like-icon').each(function () {
+            $(this).data('liked', false);
+        });
+
+        // Gán sự kiện click cho các biểu tượng Like
+        $('.like-icon').click(function () {
+            const likeCountElement = $(this).siblings('.like-count');
+            let likeCount = parseInt(likeCountElement.text());
+            let isLiked = $(this).data('liked');
+
+            if (isLiked) {
+                likeCount -= 1;
+                $(this).attr('src', 'https://cdn-icons-png.freepik.com/256/8647/8647296.png?ga=GA1.1.648560867.1713175690&semt=ais_hybrid');
+                $(this).data('liked', false);
+            } else {
+                likeCount += 1;
+                $(this).attr('src', 'https://cdn-icons-png.freepik.com/128/2839/2839214.png');
+                $(this).data('liked', true);
+            }
+            likeCountElement.text(likeCount + ' likes');
+        });
+    });
+</script>
+</body>
+</html>
