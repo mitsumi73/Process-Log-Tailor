@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Event Details</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/7392/7392631.png" type="image/png">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            display: contents;
+            margin: 50px 30px 10px 30px;
+        }
+
+        .filter-form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+
+        .filter-form input {
+            margin-right: 10px;
+        }
+
+        .table-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-download,
+        .btn-primary,
+        .btn-secondary {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        .table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .table th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: center;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .table-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .search-result {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+    <script>
+        let sortDirection = {}; // Track sort direction for each column
+        let filteredRows = []; // Store filtered rows
+
+        function paginateTable(rowsPerPage, rows) {
+            const totalRows = rows.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            const paginationContainer = document.querySelector('.pagination-container');
+            let currentPage = 1;
+
+            function displayRows() {
+                rows.forEach((row, index) => {
+                    row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? '' : 'none';
+                });
+                updateOrderColumn((currentPage - 1) * rowsPerPage, rows); // Update order column whenever rows are displayed
+            }
+
+            function updatePagination() {
+                paginationContainer.innerHTML = `
+                <button class="btn btn-secondary" onclick="previousPage()" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                <span> Page ${currentPage} of ${totalPages} </span>
+                <button class="btn btn-secondary" onclick="nextPage()" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+            `;
+            }
+
+            window.previousPage = function () {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayRows();
+                    updatePagination();
+                }
+            };
+
+            window.nextPage = function () {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayRows();
+                    updatePagination();
+                }
+            };
+
+            displayRows();
+            updatePagination();
+        }
+
+        function changeRowsPerPage(value) {
+            let rowsPerPage;
+            if (value === 'All') {
+                rowsPerPage = Number.MAX_SAFE_INTEGER;
+            } else {
+                rowsPerPage = parseInt(value);
+            }
+            localStorage.setItem('rowsPerPage', rowsPerPage); // Save the selected rows per page to localStorage
+            const rows = filteredRows.length ? filteredRows : document.querySelectorAll('.table-container tbody tr');
+            paginateTable(rowsPerPage, Array.from(rows));
+        }
+
+        function sortTableByColumn(columnIndex, type) {
+            const table = document.querySelector('.table-container tbody');
+            const rows = Array.from(table.rows);
+            const isAscending = sortDirection[columnIndex] !== 'asc';
+            sortDirection[columnIndex] = isAscending ? 'asc' : 'desc';
+
+            let sortedRows;
+            if (type === 'text') {
+                sortedRows = rows.sort((a, b) => {
+                    const aText = a.cells[columnIndex].textContent.trim();
+                    const bText = b.cells[columnIndex].textContent.trim();
+                    return isAscending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+                });
+            } else if (type === 'number') {
+                sortedRows = rows.sort((a, b) => {
+                    const aNum = parseInt(a.cells[columnIndex].textContent.trim());
+                    const bNum = parseInt(b.cells[columnIndex].textContent.trim());
+                    return isAscending ? aNum - bNum : bNum - aNum;
+                });
+            } else if (type === 'date') {
+                sortedRows = rows.sort((a, b) => {
+                    const aDate = new Date(a.cells[columnIndex].textContent.trim());
+                    const bDate = new Date(b.cells[columnIndex].textContent.trim());
+                    return isAscending ? aDate - bDate : bDate - aDate;
+                });
+            }
+
+            sortedRows.forEach(row => table.appendChild(row));
+            updateOrderColumn(); // Update order column after sorting
+            changeRowsPerPage(document.getElementById('rows-per-page').value); // Repaginate after sorting
+        }
+
+        function filterTable() {
+            const input = document.getElementById('trace-input');
+            const filter = input.value; // Không chuyển đổi sang chữ thường để phân biệt chữ hoa và chữ thường
+            const rows = document.querySelectorAll('.table-container tbody tr');
+            filteredRows = Array.from(rows).filter(row => {
+                const cells = Array.from(row.cells);
+                return cells.some(cell => cell.textContent.includes(filter)); // So sánh trực tiếp để phân biệt chữ hoa và chữ thường
+            });
+
+            rows.forEach(row => {
+                row.style.display = 'none'; // Hide all rows initially
+            });
+
+            // Show only filtered rows
+            filteredRows.forEach(row => {
+                row.style.display = '';
+            });
+
+            updateOrderColumn(); // Update order column whenever rows are filtered
+            applyRowsPerPage(); // Apply the rows per page setting
+            updateSearchResultCount(filteredRows.length); // Update search result count
+        }
+
+        function updateOrderColumn(startIndex = 0, rows = null) {
+            if (!rows) {
+                rows = document.querySelectorAll('.table-container tbody tr');
+            }
+            let order = startIndex + 1;
+            Array.from(rows).forEach(row => {
+                if (row.style.display !== 'none') {
+                    row.cells[0].textContent = order++;
+                }
+            });
+        }
+
+        function hideEmptyColumns() {
+            const table = document.querySelector('.table-container table');
+            const thElements = table.querySelectorAll('th');
+            const rowElements = table.querySelectorAll('tbody tr');
+
+            thElements.forEach((th, index) => {
+                if (index === 0 || index === thElements.length - 1) return; // Bỏ qua cột đầu tiên (Order) và cột cuối cùng (Select All)
+
+                let hasData = false;
+                rowElements.forEach(row => {
+                    const cell = row.cells[index];
+                    if (cell && cell.textContent.trim() !== '') {
+                        hasData = true;
+                    }
+                });
+                if (!hasData) {
+                    th.style.display = 'none';
+                    rowElements.forEach(row => {
+                        const cell = row.cells[index];
+                        if (cell) {
+                            cell.style.display = 'none';
+                        }
+                    });
+                } else {
+                    th.style.display = ''; // Ensure visible if it has data
+                }
+            });
+
+            // Đảm bảo cột "Select" luôn hiển thị
+            thElements[thElements.length - 1].style.display = '';
+            rowElements.forEach(row => {
+                row.cells[row.cells.length - 1].style.display = '';
+            });
+        }
+
+        function clearFields() {
+            document.getElementById('trace-input').value = '';
+            filterTable();
+            // Chuyển hướng về /trace
+            window.location.href = '/trace';
+        }
+
+        function saveSearchState() {
+            const searchValue = document.getElementById('trace-input').value;
+            localStorage.setItem('searchState', searchValue);
+        }
+
+        function restoreSearchState() {
+            const savedSearch = localStorage.getItem('searchState');
+            if (savedSearch) {
+                document.getElementById('trace-input').value = savedSearch;
+                filterTable();
+            }
+        }
+
+        function applyRowsPerPage() {
+            const savedRowsPerPage = localStorage.getItem('rowsPerPage');
+            const rowsPerPageSelect = document.getElementById('rows-per-page');
+            if (savedRowsPerPage) {
+                rowsPerPageSelect.value = savedRowsPerPage === Number.MAX_SAFE_INTEGER.toString() ? 'All' : savedRowsPerPage;
+                const rows = filteredRows.length ? filteredRows : document.querySelectorAll('.table-container tbody tr');
+                paginateTable(parseInt(savedRowsPerPage), Array.from(rows));
+            } else {
+                // If no saved value, default to 10 rows per page
+                paginateTable(10, Array.from(rows));
+            }
+        }
+
+        function updateSearchResultCount(count) {
+            const resultDiv = document.getElementById('search-result-count');
+            if (count > 0) {
+                resultDiv.textContent = `Search Results: ${count}`;
+                resultDiv.style.display = 'block';
+            } else {
+                resultDiv.textContent = '';
+                resultDiv.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const rowsPerPageSelect = document.getElementById('rows-per-page');
+            if (rowsPerPageSelect) {
+                rowsPerPageSelect.addEventListener('change', function () {
+                    changeRowsPerPage(this.value);
+                });
+            }
+
+            const searchInput = document.getElementById('trace-input');
+            searchInput.addEventListener('input', filterTable);
+
+            searchInput.addEventListener('keypress', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    filterTable();
+                }
+            });
+
+            const timestampSortButton = document.getElementById('sort-timestamp');
+            if (timestampSortButton) {
+                timestampSortButton.addEventListener('click', function () {
+                    sortTableByColumn(3, 'date'); // Update column index for correct column
+                    timestampSortButton.textContent = timestampSortButton.textContent === 'Sort by Timestamp' ? 'Unsort Timestamp' : 'Sort by Timestamp';
+                });
+            }
+
+            const performerSortButton = document.getElementById('sort-performer');
+            if (performerSortButton) {
+                performerSortButton.addEventListener('click', function () {
+                    sortTableByColumn(5, 'text'); // Update column index for correct column
+                    performerSortButton.textContent = performerSortButton.textContent === 'Sort by Performer' ? 'Unsort Performer' : 'Sort by Performer';
+                });
+            }
+
+            const lifecycleTransitionSortButton = document.getElementById('sort-lifecycle-transition');
+            if (lifecycleTransitionSortButton) {
+                lifecycleTransitionSortButton.addEventListener('click', function () {
+                    sortTableByColumn(4, 'text'); // Sắp xếp theo cột Lifecycle Transition (cột thứ 5, index = 4)
+                    lifecycleTransitionSortButton.textContent = lifecycleTransitionSortButton.textContent === 'Sort by Lifecycle Transition' ? 'Unsort Lifecycle Transition' : 'Sort by Lifecycle Transition';
+                });
+            }
+
+            hideEmptyColumns(); // Hide columns with no data on page load
+            restoreSearchState(); // Restore the search state on page load
+            applyRowsPerPage(); // Apply the rows per page setting on page load
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="filter-form">
+        <h1 style="padding-bottom: 30px" class="text-center">Event Details</h1>
+        <form id="filter-form" class="form-inline justify-content-center">
+            <div class="form-group">
+                <input type="text" name="trace" id="trace-input" placeholder="Search" class="form-control"/>
+            </div>
+            <button type="button" class="btn btn-secondary" style="margin-left: 10px" onclick="clearFields()">Clear</button>
+        </form>
+        <div id="search-result-count" class="search-result" style="display: none;">Search Results: 0</div>
+    </div>
+    <div class="table-container">
+        <div class="table-options">
+            <div>
+                <label for="rows-per-page">Select Number Of Rows: </label>
+                <select id="rows-per-page" class="form-control" style="width: auto; display: inline-block;">
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="All">All</option>
+                </select>
+            </div>
+            <div>
+                <button id="sort-timestamp" class="btn btn-secondary">Sort Timestamp</button>
+                <button id="sort-performer" class="btn btn-secondary">Sort Performer</button>
+                <button id="sort-lifecycle-transition" class="btn btn-secondary">Sort Lifecycle Transition</button>
+            </div>
+        </div>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+            <tr>
+                <th id="order-column">Order</th>
+                <th>Trace ID</th>
+                <th>Name Event</th>
+                <th>Timestamp</th>
+                <th>Lifecycle Transition</th>
+                <th>Performer</th>
+                <th>Note</th>
+                <th>Event ID</th>
+                <th>Activity</th>
+                <th>Doc ID</th>
+                <th>Subprocess</th>
+                <th>Identity ID</th>
+                <th>Doc Type</th>
+                <th>Doc ID UUID</th>
+                <th>Success</th>
+                <th>Select <input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="log : ${logs}">
+                <td></td> <!-- Số thứ tự sẽ được thêm vào đây -->
+                <td th:if="${log.trace != null}">
+                    <button class="btn btn-info trace-button" th:text="${log.trace}"
+                            th:data-trace="${log.trace}"></button>
+                </td>
+                <td th:if="${log.event != null}">
+                    <button class="btn btn-info event-button" th:text="${log.event}"
+                            th:data-event="${log.event}"></button>
+                </td>
+                <td th:if="${log.timestamp != null}" th:text="${log.timestamp}"></td>
+                <td th:if="${log.lifecycleTransition != null}" th:text="${log.lifecycleTransition}"></td>
+                <td th:if="${log.performer != null}" th:text="${log.performer}"></td>
+                <td th:if="${log.note != null}" th:text="${log.note}"></td>
+                <td th:if="${log.eventId != null}" th:text="${log.eventId}"></td>
+                <td th:if="${log.activity != null}" th:text="${log.activity}"></td>
+                <td th:if="${log.docId != null}" th:text="${log.docId}"></td>
+                <td th:if="${log.subprocess != null}" th:text="${log.subprocess}"></td>
+                <td th:if="${log.identityId != null}" th:text="${log.identityId}"></td>
+                <td th:if="${log.docType != null}" th:text="${log.docType}"></td>
+                <td th:if="${log.docIdUuid != null}" th:text="${log.docIdUuid}"></td>
+                <td th:if="${log.success != null}" th:text="${log.success}"></td>
+                <td>
+                    <input type="checkbox" name="selectedLogs" th:value="${log.eventId}">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="text-center btn-download">
+            <a id="download-link" style="display:none;"></a>
+            <button type="button" id="download-excel-button" class="btn btn-success">Download Excel</button>
+            <button type="button" id="download-xes-button" class="btn btn-warning">Download XES</button>
+        </div>
+        <div class="pagination-container">
+            <button class="btn btn-secondary" onclick="previousPage()" disabled>Previous</button>
+            <span> Page 1 of 1 </span>
+            <button class="btn btn-secondary" onclick="nextPage()" disabled>Next</button>
+        </div>
+    </div>
+</div>
+<script>
+    function setTrace(trace) {
+        const event = document.querySelector('.event-button.active')?.getAttribute('data-event') || '';
+        window.location.href = `/trace/filter?trace=${trace}&event=${event}`;
+    }
+
+    function setEvent(event) {
+        const trace = document.querySelector('.trace-button.active')?.getAttribute('data-trace') || '';
+        window.location.href = `/trace/filter?trace=${trace}&event=${event}`;
+    }
+
+    function clearFields() {
+        document.getElementById('trace-input').value = '';
+        filterTable();
+        // Chuyển hướng về /trace
+        window.location.href = '/trace';
+    }
+
+    function downloadSelected() {
+        const selectedLogs = Array.from(document.querySelectorAll('input[name="selectedLogs"]:checked'))
+            .map(checkbox => checkbox.value)
+            .join(',');
+        if (selectedLogs.length === 0) {
+            alert('No logs selected');
+            return;
+        }
+        const downloadLink = document.getElementById('download-link');
+        downloadLink.href = `/details/download?selectedLogs=${selectedLogs}`;
+        downloadLink.click();
+    }
+
+    function toggleSelectAll() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('input[name="selectedLogs"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const traceButtons = document.querySelectorAll('.trace-button');
+        traceButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const trace = this.getAttribute('data-trace');
+                setTrace(trace);
+            });
+        });
+
+        const eventButtons = document.querySelectorAll('.event-button');
+        eventButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const event = this.getAttribute('data-event');
+                setEvent(event);
+            });
+        });
+
+        const downloadButton = document.getElementById('download-button');
+        downloadButton.addEventListener('click', downloadSelected);
+
+        const rowsPerPageSelect = document.getElementById('rows-per-page');
+        rowsPerPageSelect.addEventListener('change', function () {
+            changeRowsPerPage(this.value);
+        });
+
+        const timestampSortButton = document.getElementById('sort-timestamp');
+        if (timestampSortButton) {
+            timestampSortButton.addEventListener('click', function () {
+                sortTableByColumn(3, 'date');
+                timestampSortButton.textContent = timestampSortButton.textContent === 'Sort by Timestamp' ? 'Unsort Timestamp' : 'Sort by Timestamp';
+            });
+        }
+
+        const performerSortButton = document.getElementById('sort-performer');
+        if (performerSortButton) {
+            performerSortButton.addEventListener('click', function () {
+                sortTableByColumn(5, 'text');
+                performerSortButton.textContent = performerSortButton.textContent === 'Sort by Performer' ? 'Unsort Performer' : 'Sort by Performer';
+            });
+        }
+
+        const lifecycleTransitionSortButton = document.getElementById('sort-lifecycle-transition');
+        if (lifecycleTransitionSortButton) {
+            lifecycleTransitionSortButton.addEventListener('click', function () {
+                sortTableByColumn(4, 'text'); // Sắp xếp theo cột Lifecycle Transition (cột thứ 5, index = 4)
+                lifecycleTransitionSortButton.textContent = lifecycleTransitionSortButton.textContent === 'Sort by Lifecycle Transition' ? 'Unsort Lifecycle Transition' : 'Sort by Lifecycle Transition';
+            });
+        }
+
+        hideEmptyColumns(); // Hide columns with no data on page load
+        restoreSearchState(); // Restore the search state on page load
+        applyRowsPerPage(); // Apply the rows per page setting on page load
+    });
+</script>
+<script>
+    function downloadSelected(format) {
+        const selectedLogs = Array.from(document.querySelectorAll('input[name="selectedLogs"]:checked'))
+            .map(checkbox => checkbox.value)
+            .join(',');
+        if (selectedLogs.length === 0) {
+            alert('No logs selected');
+            return;
+        }
+        const downloadLink = document.getElementById('download-link');
+        downloadLink.href = `/details/download?selectedLogs=${selectedLogs}&format=${format}`;
+        downloadLink.click();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const downloadExcelButton = document.getElementById('download-excel-button');
+        const downloadXesButton = document.getElementById('download-xes-button');
+
+        downloadExcelButton.addEventListener('click', function () {
+            downloadSelected('excel');
+        });
+
+        downloadXesButton.addEventListener('click', function () {
+            downloadSelected('xes');
+        });
+    })
+</script>
+</body>
+</html>
