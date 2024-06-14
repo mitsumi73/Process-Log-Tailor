@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Event Activities</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/7392/7392631.png" type="image/png">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            display: contents;
+            margin: 50px 30px 10px 30px;
+        }
+
+        .activity-table {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .activity-table th, .activity-table td {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 style="padding: 30px;" class="text-center">Event Activities</h1>
+    <div class="activity-table">
+        <table class="table table-striped">
+            <thead class="thead-dark">
+            <tr>
+                <th>Order</th>
+                <th>Event</th>
+                <th>Type</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="activity : ${eventActivities}">
+                <td th:text="${activity.order}"></td>
+                <td th:text="${activity.name}"></td>
+                <td th:text="${activity.type}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
