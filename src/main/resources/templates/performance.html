@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Performance Analysis</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/7392/7392631.png" type="image/png">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            display: contents;
+            margin: 50px 30px 10px 30px;
+        }
+        .table-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 0 300px;
+        }
+        .table th, .table td {
+            padding: 10px;
+            font-size: 20px;
+        }
+        .results {
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px 300px;
+        }
+        .alert {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .alert-good {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-stable {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .alert-poor {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .highlight {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="padding: 30px;" class="text-center">Performance Analysis</h1>
+        <div class="table-container">
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Order</th>
+                        <th>Name Event</th>
+                        <th>Good Performance (%)</th>
+                        <th>Poor Performance (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="entry, iterStat : ${performanceAnalysis}">
+                        <td th:text="${iterStat.index + 1}"></td>
+                        <td th:text="${entry.event}"></td>
+                        <td th:text="${entry.good}"></td>
+                        <td th:text="${entry.poor}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="results">
+            <h2>Performance Summary</h2>
+            <div id="good-performance" class="alert alert-good"></div>
+            <div id="stable-performance" class="alert alert-stable"></div>
+            <div id="poor-performance" class="alert alert-poor"></div>
+        </div>
+    </div>
+
+    <script>
+        // Function to analyze performance
+        function analyzePerformance() {
+            let goodPerformance = [];
+            let stablePerformance = [];
+            let poorPerformance = [];
+
+            const rows = document.querySelectorAll("tbody tr");
+            rows.forEach(row => {
+                const nameEvent = row.children[1].innerText;
+                const good = parseFloat(row.children[2].innerText);
+                const poor = parseFloat(row.children[3].innerText);
+
+                if (good >= 80 && poor < 19.99) {
+                    goodPerformance.push(nameEvent);
+                } else if (good < 19.99 && poor >= 80) {
+                    poorPerformance.push(nameEvent);
+                } else {
+                    stablePerformance.push(nameEvent);
+                }
+            });
+
+            function formatEventList(events) {
+                return events.map(event => `<span class="highlight">${event}</span>`).join(", ");
+            }
+
+            document.getElementById("good-performance").innerHTML = goodPerformance.length > 0
+                ? "Good performance events: " + formatEventList(goodPerformance) + " have a high rate of good performance, indicating that the execution time of these events is generally stable."
+                : "No events with good performance.";
+
+            document.getElementById("stable-performance").innerHTML = stablePerformance.length > 0
+                ? "Stable performance events: " + formatEventList(stablePerformance) + " have a relatively balanced rate of performance, indicating that the execution time of these events is fairly stable."
+                : "No events with stable performance.";
+
+            document.getElementById("poor-performance").innerHTML = poorPerformance.length > 0
+                ? "Poor performance events: " + formatEventList(poorPerformance) + " always have poor performance, possibly because these are starting events and do not have real execution time."
+                : "No events with poor performance.";
+        }
+
+        // Call the function after page load
+        document.addEventListener("DOMContentLoaded", analyzePerformance);
+    </script>
+</body>
+</html>
