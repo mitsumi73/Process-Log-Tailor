@@ -1,67 +1,125 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.3.0'
-	id 'io.spring.dependency-management' version '1.1.5'
-	id 'org.graalvm.buildtools.native' version '0.10.2'
+   id 'java'
+   id 'org.springframework.boot' version '3.2.4'
+   id 'io.spring.dependency-management' version '1.1.4'
 }
 
-group = 'com.project'
+group = 'com.processlogtailor'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(22)
-	}
-}
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
-	mavenCentral()
+   mavenCentral()
+   jcenter()
+   maven { url "https://repo.spring.io/milestone" }
+   maven { url "https://repo.spring.io/snapshot" }
+   maven { url "https://jitpack.io" }
+   maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+   maven { url "https://repository.apache.org/snapshots/" }
+   maven { url "https://mvnrepository.com/artifact/org.deckfour/xes-lite/2.0.3" }
+   maven { url "https://repo.maven.apache.org/maven2" }
+     maven { url "https://maven-central.storage.googleapis.com/maven2/" }
+    flatDir {
+        dirs 'libs'
+    }
 }
 
-ext {
-	set('springCloudVersion', "2023.0.2")
-	set('springModulithVersion', "1.2.0")
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-batch'
-	implementation 'org.springframework.boot:spring-boot-starter-cache'
-	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-	implementation 'org.springframework.boot:spring-boot-starter-freemarker'
-	implementation 'org.springframework.boot:spring-boot-starter-groovy-templates'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-web-services'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	implementation 'org.springframework.cloud:spring-cloud-config-server'
-	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	implementation 'org.springframework.modulith:spring-modulith-starter-core'
-	implementation 'org.springframework.modulith:spring-modulith-starter-mongodb'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'io.projectreactor:reactor-test'
-	testImplementation 'org.springframework.batch:spring-batch-test'
-	testImplementation 'org.springframework.modulith:spring-modulith-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'  // MongoDB support
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'    // Thymeleaf template engine
+    implementation 'org.springframework.boot:spring-boot-starter-web'          // Web application support
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'     // Actuator for monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'     // JPA support
+    implementation 'org.springframework.boot:spring-boot-starter'              // Core starter
+
+    // Jakarta EE and Java EE APIs
+    implementation 'jakarta.servlet:jakarta.servlet-api:5.0.0'                 // Servlet API
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'               // JAXB API
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'                             // JAXB API (older version)
+    implementation 'jakarta.xml.ws:jakarta.xml.ws-api:3.0.1'                   // JAX-WS API
+
+    // JAXB Runtime
+    implementation 'org.glassfish.jaxb:jaxb-runtime:3.0.1'                     // JAXB runtime
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'                     // JAXB runtime (older version)
+
+    // Apache Libraries
+    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'               // JSP support with Tomcat
+    implementation 'org.apache.poi:poi:5.2.2'                                  // Apache POI core library
+    implementation 'org.apache.poi:poi-ooxml:5.2.2'                            // Apache POI OOXML support
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'                            // Apache POI OOXML support (newer version)
+    implementation 'org.apache.poi:poi:5.2.3'                                  // Apache POI core library (newer version)
+    implementation 'org.apache.poi:poi:5.0.0'                                  // Apache POI core library (older version)
+    implementation 'org.apache.poi:poi-ooxml:5.0.0'                            // Apache POI OOXML support (older version)
+    implementation 'org.apache.poi:poi-ooxml-schemas:4.1.2'                    // Apache POI OOXML schemas
+    implementation 'org.apache.commons:commons-compress:1.21'                  // Commons Compress library
+    implementation 'org.apache.commons:commons-collections4:4.4'               // Commons Collections library
+    implementation 'org.apache.xmlbeans:xmlbeans:5.0.2'                        // XMLBeans library
+    implementation 'org.apache.xmlbeans:xmlbeans:5.1.1'                        // XMLBeans library (newer version)
+
+    // Taglibs
+    implementation 'org.apache.taglibs:taglibs-standard-impl:1.2.5'            // JSTL implementation
+    implementation 'org.apache.taglibs:taglibs-standard-spec:1.2.5'            // JSTL specification
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:2.0.0'          // JSTL support
+
+    // Database
+    implementation 'com.h2database:h2'                                         // H2 database
+    runtimeOnly 'org.postgresql:postgresql'                                    // PostgreSQL database
+
+    // Webjars
+    implementation 'org.webjars:jquery:3.6.0'                                  // jQuery
+    implementation 'org.webjars:chartjs:3.6.0'                                 // Chart.js
+
+    // Additional Libraries
+    implementation 'com.fasterxml.jackson.core:jackson-databind'               // Jackson Databind
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'            // Jackson Annotations
+    implementation 'com.fasterxml.jackson.core:jackson-core'                   // Jackson Core
+    implementation 'com.google.guava:guava:32.0.0-android'                     // Guava
+    implementation 'org.ow2.asm:asm:9.5'                                       // ASM library
+    implementation 'xalan:xalan:2.7.3'                                         // Xalan XSLT processor
+
+    // Local JAR Files
+    implementation fileTree(dir: 'libs', include: ['*.jar'])                   // Local JAR files
+    implementation files('libs/xes-standard-2.0.jar')                          // Specific local JAR file
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'                                     // Lombok for compile time
+    annotationProcessor 'org.projectlombok:lombok'                             // Lombok annotation processor
+    implementation 'org.projectlombok:lombok'                                  // Lombok library
+
+    // Development Tools
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'            // Spring Boot DevTools
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'     // Spring Boot test starter
+    testImplementation 'junit:junit:4.13.1'                                    // JUnit (older version)
+    testImplementation 'junit:junit:4.13.2'                                    // JUnit (newer version)
+}
+
+task runXesprocessor(type: JavaExec) {
+    main = 'com.project.xesprocessor.XesprocessorApplication'
+    classpath = sourceSets.main.runtimeClasspath
+    doFirst {
+        println "Classpath: ${classpath.asPath}"
+    }
 }
 
 dependencyManagement {
-	imports {
-		mavenBom "org.springframework.modulith:spring-modulith-bom:${springModulithVersion}"
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-	}
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.0.0"
+    }
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
